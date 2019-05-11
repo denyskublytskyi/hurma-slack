@@ -28,13 +28,19 @@ const apiCall = async ({ path }) => {
 
 const getLeavesByTypeFn = departments => async type => {
     const responses = await Promise.all(departments.map(({ id }) => apiCall({ path: `departments/${id}/${type}` })));
-    return flatten(responses)
+    const responsesWithDepartments = responses.map((response, i) => response.map(leave => ({ ...leave, department_name: get(departments[i], 'name')})))
+    return flatten(responsesWithDepartments)
+}
+
+const getEmployeeByIdFn = employees => {
+    const employeesById = keyBy(employees, 'id')
+    return id => employeesById[id]
 }
 
 const start = async () => {
 
     const employees = await apiCall({ path: 'employees' })
-    const employeesById = keyBy(employees, 'id')
+    const getEmployeeById = getEmployeeByIdFn(employees)
     const departments = await apiCall({ path: 'departments' })
 
     const getLeavesByType = getLeavesByTypeFn(departments)
@@ -46,13 +52,16 @@ const start = async () => {
     const unpaidVacations = await getLeavesByType('unpaid-vacations')
     const vacations = await getLeavesByType('vacations')
 
-    const today = format(new Date(), 'YYYY-MM-DD')
+    const today = new Date()
+    const date = format(today, 'YYYY-MM-DD')
+    const dateForText = format(today, 'DD MMM YYYY', { locale: ruLocale })
 
-    const leavesText =[...businessTrips, ...homeWorks, ...sickLeaves, ...sickLeavesDocumented, ...unpaidVacations, ...vacations]
-        .filter(({ day }) => day === today)
-        .map(leave => `${get(employeesById[leave.people_id], 'name')}, ${leave.type_description}`).join('\n')
+    const leaves = [...businessTrips, ...homeWorks, ...sickLeaves, ...sickLeavesDocumented, ...unpaidVacations, ...vacations].filter(({ day }) => day === date)
+    const leavesText = leaves.map(({ people_id, department_name, type_description }) => `${get(getEmployeeById(people_id), 'name')}, ${department_name}, ${get(getEmployeeById(people_id), 'position')}, ${type_description}`).join('\n')
 
-    const text = `Вне офиса сегодня, *${format(new Date(), 'DD MMM YYYY', { locale: ruLocale })}*:\n\n${leavesText}`
+    const text = leaves.length === 0
+        ? `Все в офисе сегодня, *${dateForText}* :muscle:`
+        :`Вне офиса сегодня, *${dateForText}*:\n\n${leavesText}`
 
     const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
     await webhook.send({ text })
