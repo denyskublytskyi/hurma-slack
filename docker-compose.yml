@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   hurma:
-    image: registry.gitlab.com/skinholdings/hurmahr-slack:latest
+    image: registry.gitlab.com/skinholdings/hurmahr-slack:v1.0.1
     build: ./
     ports:
       - 5000:5000
@@ -10,4 +10,3 @@ services:
       HURMA_URI:
       HURMA_API_TOKEN:
       SLACK_WEBHOOK_URL:
-

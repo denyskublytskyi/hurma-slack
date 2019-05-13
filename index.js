@@ -46,7 +46,7 @@ const start = async () => {
     const getLeavesByType = getLeavesByTypeFn(departments)
 
     const businessTrips = await getLeavesByType('business-trip')
-    const homeWorks = await getLeavesByType('home-works')
+    const homeWorks = await getLeavesByType('home-work')
     const sickLeaves = await getLeavesByType('sick-leave')
     const sickLeavesDocumented = await getLeavesByType('sick-leave-documented')
     const unpaidVacations = await getLeavesByType('unpaid-vacations')
