@@ -2,13 +2,20 @@ require('dotenv-safe').config({
     allowEmptyValues: true
 });
 
+
 const get = require('lodash/get')
 const flatten = require('lodash/flatten')
 const keyBy = require('lodash/keyBy')
+const compose = require('lodash/fp/compose')
+const filter = require('lodash/fp/filter')
+const uniqWith = require('lodash/fp/uniqWith')
+const fpFlatten = require('lodash/fp/flatten')
 const request = require('request-promise')
 const { IncomingWebhook } = require('@slack/webhook')
 const format = require('date-fns/format')
 const ruLocale = require('date-fns/locale/ru')
+
+const logger = console
 
 const apiUrl = `${process.env.HURMA_URI}/api/v1`
 const apiCall = async ({ path }) => {
@@ -43,28 +50,32 @@ const start = async () => {
     const getEmployeeById = getEmployeeByIdFn(employees)
     const departments = await apiCall({ path: 'departments' })
 
-    const getLeavesByType = getLeavesByTypeFn(departments)
-
-    const businessTrips = await getLeavesByType('business-trip')
-    const homeWorks = await getLeavesByType('home-work')
-    const sickLeaves = await getLeavesByType('sick-leave')
-    const sickLeavesDocumented = await getLeavesByType('sick-leave-documented')
-    const unpaidVacations = await getLeavesByType('unpaid-vacations')
-    const vacations = await getLeavesByType('vacations')
-
     const today = new Date()
     const date = format(today, 'YYYY-MM-DD')
     const dateForText = format(today, 'DD MMM YYYY', { locale: ruLocale })
 
-    const leaves = [...businessTrips, ...homeWorks, ...sickLeaves, ...sickLeavesDocumented, ...unpaidVacations, ...vacations].filter(({ day }) => day === date)
+    const prepare = compose(
+        uniqWith((a, b) => a.people_id === b.people_id && a.type_id === b.type_id),
+        filter(['day', date]),
+        fpFlatten,
+    )
+
+    const leaves = prepare(await Promise.all(['business-trip', 'home-work', 'sick-leave', 'sick-leave-documented', 'unpaid-vacations', 'vacations'].map(type => getLeavesByTypeFn(departments)(type))))
+
     const leavesText = leaves.map(({ people_id, department_name, type_description }) => `${get(getEmployeeById(people_id), 'name')}, ${department_name}, ${get(getEmployeeById(people_id), 'position')}, ${type_description}`).join('\n')
 
     const text = leaves.length === 0
         ? `Все в офисе сегодня, *${dateForText}* :muscle:`
         :`Вне офиса сегодня, *${dateForText}*:\n\n${leavesText}`
 
+    logger.info(text)
     const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
     await webhook.send({ text })
 }
+
+process.on('unhandledRejection', (reason, p) => {
+    logger.info(`Possibly Unhandled Rejection at: Promise ${p}, reason: ${reason}`)
+    process.exit(1)
+})
 
 start()
