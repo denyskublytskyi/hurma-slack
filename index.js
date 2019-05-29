@@ -7,6 +7,7 @@ const get = require('lodash/get')
 const flatten = require('lodash/flatten')
 const keyBy = require('lodash/keyBy')
 const compose = require('lodash/fp/compose')
+const map = require('lodash/fp/map')
 const filter = require('lodash/fp/filter')
 const uniqWith = require('lodash/fp/uniqWith')
 const fpFlatten = require('lodash/fp/flatten')
@@ -44,6 +45,18 @@ const getEmployeeByIdFn = employees => {
     return id => employeesById[id]
 }
 
+const leaveTypes = {
+    VACATION: 1,
+    SICK_LEAVE: 3,
+    WORK_FROM_HOME: 5,
+}
+
+const leaveIcons = {
+    [leaveTypes.VACATION]: ':palm_tree:',
+    [leaveTypes.SICK_LEAVE]: ':pill:',
+    [leaveTypes.WORK_FROM_HOME]: ':eggplant:',
+}
+
 const start = async () => {
 
     const employees = await apiCall({ path: 'employees' })
@@ -55,6 +68,10 @@ const start = async () => {
     const dateForText = format(today, 'DD MMM YYYY', { locale: ruLocale })
 
     const prepare = compose(
+        map((leave) => ({
+            ...leave,
+            type_description: `${leave.type_description} ${leaveIcons[leave.type_id] || ''}`
+        })),
         uniqWith((a, b) => a.people_id === b.people_id && a.type_id === b.type_id),
         filter(['day', date]),
         fpFlatten,
