@@ -1,0 +1,8 @@
+name: cronjobs
+description: A chart for cron jobs
+version: 0.1.0
+keywords:
+  - cron
+maintainers:
+  - name: Denys Kublytskyi
+    email: denys.kublytskyi@ekingdom.tech

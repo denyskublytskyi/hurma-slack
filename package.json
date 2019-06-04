@@ -1,10 +1,10 @@
 {
   "name": "hurma-slack",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./"
+    "start": "node -r 'dotenv-safe/config' ./"
   },
   "author": {
     "name": "Denys Kublytskyi",

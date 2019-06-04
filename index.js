@@ -1,8 +1,3 @@
-require('dotenv-safe').config({
-    allowEmptyValues: true
-});
-
-
 const get = require('lodash/get')
 const flatten = require('lodash/flatten')
 const keyBy = require('lodash/keyBy')
@@ -35,8 +30,11 @@ const apiCall = async ({ path }) => {
 }
 
 const getLeavesByTypeFn = departments => async type => {
-    const responses = await Promise.all(departments.map(({ id }) => apiCall({ path: `departments/${id}/${type}` })));
-    const responsesWithDepartments = responses.map((response, i) => response.map(leave => ({ ...leave, department_name: get(departments[i], 'name')})))
+    const responses = await Promise.all(departments.map(({ id }) => apiCall({ path: `departments/${id}/${type}` })))
+    const responsesWithDepartments = responses.map((response, i) => response.map(leave => ({
+        ...leave,
+        department_name: get(departments[i], 'name'),
+    })))
     return flatten(responsesWithDepartments)
 }
 
@@ -45,20 +43,28 @@ const getEmployeeByIdFn = employees => {
     return id => employeesById[id]
 }
 
+/**
+ *
+ * @type {{VACATION: number, SICK_LEAVE: number, WORK_FROM_HOME: number}}
+ */
 const leaveTypes = {
     VACATION: 1,
+    UNPAID_VACATION: 2,
     SICK_LEAVE: 3,
     WORK_FROM_HOME: 5,
 }
 
+/**
+ * @type {{[p: string]: string, [p: number]: string}}
+ */
 const leaveIcons = {
     [leaveTypes.VACATION]: ':palm_tree:',
+    [leaveTypes.UNPAID_VACATION]: ':money_mouth_face:',
     [leaveTypes.SICK_LEAVE]: ':pill:',
     [leaveTypes.WORK_FROM_HOME]: ':eggplant:',
 }
 
 const start = async () => {
-
     const employees = await apiCall({ path: 'employees' })
     const getEmployeeById = getEmployeeByIdFn(employees)
     const departments = await apiCall({ path: 'departments' })
@@ -70,7 +76,7 @@ const start = async () => {
     const prepare = compose(
         map((leave) => ({
             ...leave,
-            type_description: `${leave.type_description} ${leaveIcons[leave.type_id] || ''}`
+            type_description: `${leave.type_description} ${leaveIcons[leave.type_id] || ''}`,
         })),
         uniqWith((a, b) => a.people_id === b.people_id && a.type_id === b.type_id),
         filter(['day', date]),
@@ -83,9 +89,10 @@ const start = async () => {
 
     const text = leaves.length === 0
         ? `Все в офисе сегодня, *${dateForText}* :muscle:`
-        :`Вне офиса сегодня, *${dateForText}*:\n\n${leavesText}`
+        : `Вне офиса сегодня, *${dateForText}*:\n\n${leavesText}`
 
     logger.info(text)
+
     const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
     await webhook.send({ text })
 }
@@ -96,3 +103,10 @@ process.on('unhandledRejection', (reason, p) => {
 })
 
 start()
+    .then(() => {
+        logger.info('Successfully finished')
+    })
+    .catch(e => {
+        logger.error(e)
+        process.exit(1)
+    })

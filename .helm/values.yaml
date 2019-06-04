@@ -1,0 +1,19 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+jobs:
+  - name: cronjob-hurmahr-slack
+    image:
+      repository: registry.gitlab.com/skinholdings/hurmahr-slack
+      tag: v1.0.0
+      pullPolicy: Always
+    env:
+      - name: "HURMA_URI"
+        value: ""
+      - name: "HURMA_API_TOKEN"
+        value: ""
+      - name: "SLACK_WEBHOOK_URL"
+        value: ""
+    schedule: "0 7,9 * * 1-5"
+    failedJobsHistoryLimit: 3
+    successfulJobsHistoryLimit: 3
+    concurrencyPolicy: Forbid
