@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   hurma:
-    image: registry.gitlab.com/skinholdings/hurmahr-slack:v1.1.0
+    image: registry.gitlab.com/skinholdings/hurmahr-slack:v1.2.0
     build: ./
     ports:
       - 5000:5000
