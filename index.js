@@ -51,6 +51,7 @@ const leaveTypes = {
     VACATION: 1,
     UNPAID_VACATION: 2,
     SICK_LEAVE: 3,
+    BUSINESS_TRIP: 4,
     WORK_FROM_HOME: 5,
 }
 
@@ -61,6 +62,7 @@ const leaveIcons = {
     [leaveTypes.VACATION]: ':palm_tree:',
     [leaveTypes.UNPAID_VACATION]: ':money_mouth_face:',
     [leaveTypes.SICK_LEAVE]: ':pill:',
+    [leaveTypes.BUSINESS_TRIP]: ':airplane:',
     [leaveTypes.WORK_FROM_HOME]: ':eggplant:',
 }
 
