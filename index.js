@@ -135,7 +135,7 @@ const start = async () => {
     const getEmployeeById = getEmployeeByIdFn(employees)
     const departments = await apiCall({ path: 'departments' })
 
-    const today = new Date('1/23/2020')
+    const today = new Date()
     const date = format(today, 'YYYY-MM-DD')
     const dateForText = getTextDate(today)
 
@@ -167,7 +167,7 @@ const start = async () => {
 
     const futureVacations = getFutureVacations({ vacationsByPeople, startDate: today })
 
-    text = futureVacations.length > 0 ? `${text}\n\nБлижайшие отпуска :palm::\n\n${futureVacations.map(({ startDate, finishDate, peopleId }) => `${get(getEmployeeById(peopleId), 'name')}, ${getDatesRangeText({ startDate, finishDate})}`).join('\n')}` : text
+    text = futureVacations.length > 0 ? `${text}\n\nБлижайшие отпуска :palm_tree::\n\n${futureVacations.map(({ startDate, finishDate, peopleId }) => `${get(getEmployeeById(peopleId), 'name')}, ${getDatesRangeText({ startDate, finishDate})}`).join('\n')}` : text
 
     text = birthdayText ? `${text}\n\n${birthdayText}` : text
     logger.info(text)
